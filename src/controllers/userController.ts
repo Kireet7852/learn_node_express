@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { Prisma } from "../generated/prisma/client.js";
+import type { CreateUserDto, UpdateUserDto } from "../validators/userValidator.js";
 import * as userService from "../services/userService.js";
 
 // GET /users
@@ -9,12 +10,9 @@ export async function listUsers(_req: Request, res: Response): Promise<void> {
 }
 
 // GET /users/:id
+// :id is already validated by validateParams(userIdParamSchema) — a positive integer
 export async function getUserById(req: Request, res: Response): Promise<void> {
   const id = Number(req.params["id"]);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "id must be a number" });
-    return;
-  }
 
   const user = await userService.getUserById(id);
   if (!user) {
@@ -26,13 +24,9 @@ export async function getUserById(req: Request, res: Response): Promise<void> {
 }
 
 // POST /users
+// Body is already validated + normalized by validateBody(createUserSchema)
 export async function createUser(req: Request, res: Response): Promise<void> {
-  const { name, email } = req.body as { name?: string; email?: string };
-
-  if (!name || !email) {
-    res.status(400).json({ error: "name and email are required" });
-    return;
-  }
+  const { name, email } = req.body as CreateUserDto;
 
   try {
     const user = await userService.createUser({ name, email });
@@ -48,14 +42,12 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 }
 
 // PATCH /users/:id
+// Body is already validated by validateBody(updateUserSchema) — guaranteed to
+// carry at least one of name/email, non-empty and correctly formatted.
+// :id is already validated by validateParams(userIdParamSchema).
 export async function updateUser(req: Request, res: Response): Promise<void> {
   const id = Number(req.params["id"]);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "id must be a number" });
-    return;
-  }
-
-  const { name, email } = req.body as { name?: string; email?: string };
+  const { name, email } = req.body as UpdateUserDto;
   const user = await userService.updateUser(id, { name, email });
 
   if (!user) {
@@ -67,12 +59,9 @@ export async function updateUser(req: Request, res: Response): Promise<void> {
 }
 
 // DELETE /users/:id
+// :id is already validated by validateParams(userIdParamSchema)
 export async function deleteUser(req: Request, res: Response): Promise<void> {
   const id = Number(req.params["id"]);
-  if (isNaN(id)) {
-    res.status(400).json({ error: "id must be a number" });
-    return;
-  }
 
   const deleted = await userService.deleteUser(id);
   if (!deleted) {
