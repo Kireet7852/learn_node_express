@@ -1,4 +1,30 @@
+import { configDotenv } from "dotenv";
+import { z } from "zod";
+
+// Load .env into process.env (no-op if the file doesn't exist)
+configDotenv();
+
+// ── Schema ────────────────────────────────────────────────────────────────────
+const envSchema = z.object({
+  PORT: z.coerce.number().int().positive().default(3000),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
+});
+
+// ── Validate ──────────────────────────────────────────────────────────────────
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  console.error("❌ Invalid environment variables:\n", parsed.error.format());
+  process.exit(1);
+}
+
+// ── Typed config export ───────────────────────────────────────────────────────
 export const config = {
-  port: Number(process.env["PORT"] ?? 3000),
-  nodeEnv: process.env["NODE_ENV"] ?? "development",
+  port: parsed.data.PORT,
+  nodeEnv: parsed.data.NODE_ENV,
 } as const;
+
+export type Config = typeof config;
+
