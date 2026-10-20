@@ -1,10 +1,9 @@
 import { Router } from "express";
-import type { Request, Response } from "express";
+import { getHealth } from "../controllers/healthController.js";
 
 const router = Router();
 
-router.get("/", (_req: Request, res: Response): void => {
-  res.json({ status: "ok" });
-});
+router.get("/", getHealth);
 
 export default router;
+

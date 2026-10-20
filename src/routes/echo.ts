@@ -1,11 +1,10 @@
 import { Router } from "express";
-import type { Request, Response } from "express";
+import { echoBody } from "../controllers/echoController.js";
 
 const router = Router();
 
-// POST /echo — echoes back the request body
-router.post("/", (req: Request, res: Response): void => {
-  res.json({ youSent: req.body });
-});
+// POST /echo
+router.post("/", echoBody);
 
 export default router;
+
