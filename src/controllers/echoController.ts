@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
+import { echo } from "../services/echoService.js";
 
 export function echoBody(req: Request, res: Response): void {
-  res.json({ youSent: req.body });
+  const result = echo(req.body);
+  res.json(result);
 }
