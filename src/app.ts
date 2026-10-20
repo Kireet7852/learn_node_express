@@ -1,10 +1,16 @@
 import express from "express";
+import cors from "cors";
+import { config } from "./config/env.js";
 import { requestLogger } from "./middlewares/requestLogger.js";
 import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import rootRouter from "./routes/index.js";
 
 const app = express();
+
+// ── CORS ─────────────────────────────────────────────────────────────────────
+// Allowed origins come from CORS_ORIGIN in .env (string or comma-separated list)
+app.use(cors({ origin: config.corsOrigin }));
 
 // ── Body parsers ─────────────────────────────────────────────────────────────
 app.use(express.json());
