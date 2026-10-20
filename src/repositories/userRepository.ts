@@ -1,62 +1,36 @@
-import db from "../db/client.js";
-import type { User, CreateUserInput } from "../db/schema.js";
+import prisma from "../db/client.js";
+import type { Prisma, User } from "../generated/prisma/client.js";
+
+export type CreateUserInput = Prisma.UserCreateInput;
+export type UpdateUserInput = Prisma.UserUpdateInput;
 
 // ── Repository functions ──────────────────────────────────────────────────────
-// Queries are prepared inline (not at module load time) so they execute
-// after migrations have already created the tables.
+// All Prisma queries are async — callers must await them.
 
-export function findAllUsers(): User[] {
-  return db
-    .query<User, []>(
-      "SELECT id, name, email, created_at FROM users ORDER BY id"
-    )
-    .all();
+export async function findAllUsers(): Promise<User[]> {
+  return prisma.user.findMany({ orderBy: { id: "asc" } });
 }
 
-export function findUserById(id: number): User | null {
-  return (
-    db
-      .query<User, [number]>(
-        "SELECT id, name, email, created_at FROM users WHERE id = ?"
-      )
-      .get(id) ?? null
-  );
+export async function findUserById(id: number): Promise<User | null> {
+  return prisma.user.findUnique({ where: { id } });
 }
 
-export function createUser(input: CreateUserInput): User {
-  const row = db
-    .query<User, [string, string]>(
-      "INSERT INTO users (name, email) VALUES (?, ?) RETURNING *"
-    )
-    .get(input.name, input.email);
-
-  if (!row) throw new Error("Insert failed — no row returned");
-  return row;
+export async function createUser(input: CreateUserInput): Promise<User> {
+  return prisma.user.create({ data: input });
 }
 
-export function updateUser(
+export async function updateUser(
   id: number,
-  input: Partial<CreateUserInput>
-): User | null {
-  const existing = findUserById(id);
+  input: UpdateUserInput
+): Promise<User | null> {
+  const existing = await findUserById(id);
   if (!existing) return null;
 
-  return (
-    db
-      .query<User, [string, string, number]>(
-        "UPDATE users SET name = ?, email = ? WHERE id = ? RETURNING *"
-      )
-      .get(input.name ?? existing.name, input.email ?? existing.email, id) ??
-    null
-  );
+  return prisma.user.update({ where: { id }, data: input });
 }
 
-export function deleteUser(id: number): boolean {
-  const row = db
-    .query<{ id: number }, [number]>(
-      "DELETE FROM users WHERE id = ? RETURNING id"
-    )
-    .get(id);
-  return row !== null;
+export async function deleteUser(id: number): Promise<boolean> {
+  // deleteMany doesn't throw when nothing matches — just reports the count
+  const result = await prisma.user.deleteMany({ where: { id } });
+  return result.count > 0;
 }
-

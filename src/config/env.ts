@@ -10,7 +10,10 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  DB_PATH: z.string().default("./data/app.db"),
+  // SQLite connection URL used by Prisma, e.g. "file:./data/app.db"
+  DATABASE_URL: z
+    .string()
+    .startsWith("file:", "DATABASE_URL must be a SQLite file URL"),
   // Comma-separated list of allowed origins, e.g. "http://localhost:5173,https://myapp.com"
   CORS_ORIGIN: z.string().default("*"),
 });
@@ -27,7 +30,7 @@ if (!parsed.success) {
 export const config = {
   port: parsed.data.PORT,
   nodeEnv: parsed.data.NODE_ENV,
-  dbPath: parsed.data.DB_PATH,
+  databaseUrl: parsed.data.DATABASE_URL,
   // Split comma-separated origins into an array (or keep "*" as-is)
   corsOrigin: parsed.data.CORS_ORIGIN.includes(",")
     ? parsed.data.CORS_ORIGIN.split(",").map((o) => o.trim())

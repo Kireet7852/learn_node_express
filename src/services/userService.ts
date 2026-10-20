@@ -1,26 +1,25 @@
-import type { User, CreateUserInput } from "../db/schema.js";
+import type { User } from "../generated/prisma/client.js";
 import * as userRepo from "../repositories/userRepository.js";
 
-export function getAllUsers(): User[] {
+export async function getAllUsers(): Promise<User[]> {
   return userRepo.findAllUsers();
 }
 
-export function getUserById(id: number): User | null {
+export async function getUserById(id: number): Promise<User | null> {
   return userRepo.findUserById(id);
 }
 
-export function createUser(input: CreateUserInput): User {
+export async function createUser(input: userRepo.CreateUserInput): Promise<User> {
   return userRepo.createUser(input);
 }
 
-export function updateUser(
+export async function updateUser(
   id: number,
-  input: Partial<CreateUserInput>
-): User | null {
+  input: userRepo.UpdateUserInput
+): Promise<User | null> {
   return userRepo.updateUser(id, input);
 }
 
-export function deleteUser(id: number): boolean {
+export async function deleteUser(id: number): Promise<boolean> {
   return userRepo.deleteUser(id);
 }
-

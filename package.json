@@ -7,9 +7,16 @@
     "dev": "bun --watch src/server.ts",
     "start": "bun src/server.ts",
     "build": "bunx tsc",
-    "typecheck": "bunx tsc --noEmit"
+    "typecheck": "bunx tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-libsql": "^7.10.1",
+    "@prisma/client": "7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.8",
     "express": "^5.3.0",
@@ -20,6 +27,7 @@
     "@types/cors": "^2.8.19",
     "@types/dotenv": "^8.2.3",
     "@types/express": "^5.0.6",
+    "prisma": "7",
     "typescript": "^7.0.2"
   }
 }
