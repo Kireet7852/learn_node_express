@@ -11,6 +11,8 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   DB_PATH: z.string().default("./data/app.db"),
+  // Comma-separated list of allowed origins, e.g. "http://localhost:5173,https://myapp.com"
+  CORS_ORIGIN: z.string().default("*"),
 });
 
 // ── Validate ──────────────────────────────────────────────────────────────────
@@ -26,6 +28,10 @@ export const config = {
   port: parsed.data.PORT,
   nodeEnv: parsed.data.NODE_ENV,
   dbPath: parsed.data.DB_PATH,
+  // Split comma-separated origins into an array (or keep "*" as-is)
+  corsOrigin: parsed.data.CORS_ORIGIN.includes(",")
+    ? parsed.data.CORS_ORIGIN.split(",").map((o) => o.trim())
+    : parsed.data.CORS_ORIGIN,
 } as const;
 
 export type Config = typeof config;
