@@ -10,6 +10,7 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  DB_PATH: z.string().default("./data/app.db"),
 });
 
 // ── Validate ──────────────────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ if (!parsed.success) {
 export const config = {
   port: parsed.data.PORT,
   nodeEnv: parsed.data.NODE_ENV,
+  dbPath: parsed.data.DB_PATH,
 } as const;
 
 export type Config = typeof config;
