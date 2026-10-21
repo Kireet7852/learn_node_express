@@ -1,11 +1,22 @@
+import http from "node:http";
 import app from "./app.js";
 import { config } from "./config/env.js";
+import { initSocketServer } from "./socket/index.js";
 
 // DB schema is managed by Prisma migrations, not at server startup.
 // Run `bun run db:migrate` before starting the server.
 
-app.listen(config.port, () => {
+const httpServer = http.createServer(app);
+const io = initSocketServer(httpServer);
+
+httpServer.listen(config.port, () => {
   console.log(
     `[${config.nodeEnv}] Server running at http://localhost:${config.port}`
   );
+  console.log(
+    `[${config.nodeEnv}] WebSocket server (Socket.IO) ready at ws://localhost:${config.port}`
+  );
 });
+
+export { httpServer, io };
+
