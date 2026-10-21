@@ -12,10 +12,29 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  // Argon2 hash (via Bun.password) — never exposed through the API
+  passwordHash String    @default("") @map("password_hash")
+  // SQLite has no native enums — validated in app code (see authValidator)
+  role         String    @default("user")
+  sessions     Session[]
+  createdAt    DateTime  @default(now()) @map("created_at")
 
   @@map("users")
+}
+
+// Server-side session store for STATEFUL authentication:
+// the browser only holds an opaque random token in a cookie;
+// the actual session lives here, so it can be revoked (logout).
+model Session {
+  id        String   @id // random 64-hex token, generated in app code
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
 }

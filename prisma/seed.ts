@@ -11,18 +11,25 @@ const adapter = new PrismaLibSql({
 const prisma = new PrismaClient({ adapter });
 
 const users = [
-  { name: "Ada Lovelace", email: "ada@example.com" },
-  { name: "Grace Hopper", email: "grace@example.com" },
-  { name: "Alan Turing", email: "alan@example.com" },
+  // Ada is the admin for testing role-based authorization
+  { name: "Ada Lovelace", email: "ada@example.com", role: "admin", password: "password123" },
+  { name: "Grace Hopper", email: "grace@example.com", role: "user", password: "password123" },
+  { name: "Alan Turing", email: "alan@example.com", role: "user", password: "password123" },
 ];
 
 for (const user of users) {
+  // Hash the password — never store plain text
+  const passwordHash = await Bun.password.hash(user.password);
+
   await prisma.user.upsert({
     where: { email: user.email },
-    update: { name: user.name },
-    create: user,
+    // update also backfills credentials for pre-auth rows
+    update: { name: user.name, passwordHash, role: user.role },
+    create: { name: user.name, email: user.email, passwordHash, role: user.role },
   });
 }
 
-console.log(`[seed] Upserted ${users.length} users.`);
+console.log(
+  `[seed] Upserted ${users.length} users (login: <email> / password123; ada@example.com is admin).`
+);
 await prisma.$disconnect();

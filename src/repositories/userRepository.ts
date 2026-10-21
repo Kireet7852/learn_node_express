@@ -15,6 +15,10 @@ export async function findUserById(id: number): Promise<User | null> {
   return prisma.user.findUnique({ where: { id } });
 }
 
+export async function findUserByEmail(email: string): Promise<User | null> {
+  return prisma.user.findUnique({ where: { email } });
+}
+
 export async function createUser(input: CreateUserInput): Promise<User> {
   return prisma.user.create({ data: input });
 }

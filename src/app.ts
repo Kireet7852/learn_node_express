@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { config } from "./config/env.js";
 import { requestLogger } from "./middlewares/requestLogger.js";
 import { notFound } from "./middlewares/notFound.js";
@@ -12,9 +13,10 @@ const app = express();
 // Allowed origins come from CORS_ORIGIN in .env (string or comma-separated list)
 app.use(cors({ origin: config.corsOrigin }));
 
-// ── Body parsers ─────────────────────────────────────────────────────────────
+// ── Body & Cookie parsers ────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // ── Request logging ───────────────────────────────────────────────────────────
 app.use(requestLogger);

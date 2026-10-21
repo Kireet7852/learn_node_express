@@ -7,6 +7,8 @@ import {
   deleteUser,
 } from "../controllers/userController.js";
 import { validateBody, validateParams } from "../middlewares/validate.js";
+import { authenticate } from "../middlewares/authenticate.js";
+import { requireOwnerOrAdmin, requireRole } from "../middlewares/authorize.js";
 import {
   createUserSchema,
   updateUserSchema,
@@ -15,15 +17,46 @@ import {
 
 const router = Router();
 
-router.get("/", listUsers);
-router.post("/", validateBody(createUserSchema), createUser);
-router.get("/:id", validateParams(userIdParamSchema), getUserById);
+// ── User routes with Authentication & Authorization ──────────────────────────
+
+// Any authenticated user can list users
+router.get("/", authenticate, listUsers);
+
+// Only administrators can create users directly via this CRUD endpoint
+// (General public signs up via POST /auth/register)
+router.post(
+  "/",
+  authenticate,
+  requireRole("admin"),
+  validateBody(createUserSchema),
+  createUser
+);
+
+// Any authenticated user can view a user by ID
+router.get(
+  "/:id",
+  authenticate,
+  validateParams(userIdParamSchema),
+  getUserById
+);
+
+// Users can only update their own profile; admins can update anyone
 router.patch(
   "/:id",
+  authenticate,
   validateParams(userIdParamSchema),
+  requireOwnerOrAdmin((req) => Number(req.params["id"])),
   validateBody(updateUserSchema),
   updateUser
 );
-router.delete("/:id", validateParams(userIdParamSchema), deleteUser);
+
+// Only administrators can delete users
+router.delete(
+  "/:id",
+  authenticate,
+  validateParams(userIdParamSchema),
+  requireRole("admin"),
+  deleteUser
+);
 
 export default router;

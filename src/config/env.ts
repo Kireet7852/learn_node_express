@@ -14,6 +14,8 @@ const envSchema = z.object({
   DATABASE_URL: z
     .string()
     .startsWith("file:", "DATABASE_URL must be a SQLite file URL"),
+  // HMAC key for signing JWTs — required, no default (fail fast if missing)
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   // Comma-separated list of allowed origins, e.g. "http://localhost:5173,https://myapp.com"
   CORS_ORIGIN: z.string().default("*"),
 });
@@ -31,6 +33,7 @@ export const config = {
   port: parsed.data.PORT,
   nodeEnv: parsed.data.NODE_ENV,
   databaseUrl: parsed.data.DATABASE_URL,
+  jwtSecret: parsed.data.JWT_SECRET,
   // Split comma-separated origins into an array (or keep "*" as-is)
   corsOrigin: parsed.data.CORS_ORIGIN.includes(",")
     ? parsed.data.CORS_ORIGIN.split(",").map((o) => o.trim())
