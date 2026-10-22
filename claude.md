@@ -68,6 +68,22 @@ Two parallel auth strategies, both using the same user model:
 ## Environment Variables
 See `.env.example`. Required: `DATABASE_URL`, `JWT_SECRET`. Optional: `PORT`, `NODE_ENV`, `CORS_ORIGIN`, `LOG_LEVEL`.
 
+## Docker
+Multi-stage Dockerfile using `oven/bun` images (deps → build → slim production). Runs as non-root user with a health check on `/health`.
+
+```bash
+# Build and run with docker-compose
+docker compose up -d
+
+# Or build standalone
+docker build -t learn-node-express .
+docker run -p 3000:3000 -e JWT_SECRET=your-secret-here -e DATABASE_URL=file:./data/app.db learn-node-express
+```
+
+- **SQLite persistence**: `docker-compose.yml` mounts a named volume (`app-data`) at `/app/data`.
+- **Auto-migration**: The container runs `prisma migrate deploy` on startup before starting the server.
+- **Env vars**: Pass `JWT_SECRET` (required), plus optional `PORT`, `CORS_ORIGIN`, `LOG_LEVEL` via `.env` or `-e` flags.
+
 ## Seed Users
 After running `bun run db:seed`:
 - `ada@example.com` / `password123` — **admin** role
