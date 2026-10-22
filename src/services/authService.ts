@@ -4,6 +4,7 @@ import * as sessionService from "./sessionService.js";
 import * as tokenService from "./tokenService.js";
 import type { AuthUser } from "../types/auth.js";
 import type { LoginDto, RegisterDto } from "../validators/authValidator.js";
+import { logger } from "../utils/logger.js";
 
 export const SESSION_COOKIE = "sid";
 
@@ -29,6 +30,8 @@ export function sanitizeUser(
  * Registers a new user with an Argon2id password hash.
  */
 export async function register(dto: RegisterDto): Promise<AuthUser> {
+  logger.info("Registering new user", { email: dto.email, role: dto.role ?? "user" });
+
   const passwordHash = await Bun.password.hash(dto.password, {
     algorithm: "argon2id",
     memoryCost: 65536,
@@ -42,6 +45,7 @@ export async function register(dto: RegisterDto): Promise<AuthUser> {
     role: dto.role ?? "user",
   });
 
+  logger.info("User registered successfully", { userId: user.id, email: user.email });
   return sanitizeUser(user, "session");
 }
 
@@ -52,16 +56,21 @@ export async function register(dto: RegisterDto): Promise<AuthUser> {
 export async function verifyCredentials(
   dto: LoginDto
 ): Promise<AuthUser | null> {
+  logger.debug("Verifying credentials for email", { email: dto.email });
+
   const user = await userRepo.findUserByEmail(dto.email);
   if (!user || !user.passwordHash) {
+    logger.warn("Credential verification failed: user not found", { email: dto.email });
     return null;
   }
 
   const isValid = await Bun.password.verify(dto.password, user.passwordHash);
   if (!isValid) {
+    logger.warn("Credential verification failed: password mismatch", { email: dto.email });
     return null;
   }
 
+  logger.info("Credentials verified successfully", { userId: user.id, email: user.email });
   return sanitizeUser(user);
 }
 

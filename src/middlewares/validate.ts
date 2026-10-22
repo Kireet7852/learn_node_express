@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import type { ZodType } from "zod";
+import { logger } from "../utils/logger.js";
 
 /**
  * Middleware factory: validates req.body against a zod schema.
@@ -17,9 +18,15 @@ export function validateBody(schema: ZodType) {
     const result = schema.safeParse(req.body);
 
     if (!result.success) {
+      const flattened = z.flattenError(result.error);
+      logger.warn("Validation failed for request body", {
+        path: req.path,
+        method: req.method,
+        errors: flattened,
+      });
       res.status(400).json({
         error: "Invalid request body",
-        details: z.flattenError(result.error), // { formErrors, fieldErrors }
+        details: flattened, // { formErrors, fieldErrors }
       });
       return;
     }
@@ -44,9 +51,16 @@ export function validateParams(schema: ZodType) {
     const result = schema.safeParse(req.params);
 
     if (!result.success) {
+      const flattened = z.flattenError(result.error);
+      logger.warn("Validation failed for route params", {
+        path: req.path,
+        method: req.method,
+        params: req.params,
+        errors: flattened,
+      });
       res.status(400).json({
         error: "Invalid route parameters",
-        details: z.flattenError(result.error),
+        details: flattened,
       });
       return;
     }

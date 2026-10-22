@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import * as sessionRepo from "../repositories/sessionRepository.js";
 import type { AuthUser } from "../types/auth.js";
+import { logger } from "../utils/logger.js";
 
 const DEFAULT_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -12,29 +13,43 @@ export async function createSession(
   const id = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + ttlMs);
 
+  logger.debug("Creating new session for user", { userId, expiresAt: expiresAt.toISOString() });
+
   await sessionRepo.createSession({
     id,
     userId,
     expiresAt,
   });
 
+  logger.info("Session created successfully", { userId, sessionId: id.slice(0, 8) + "..." });
   return { id, expiresAt };
 }
 
 export async function validateSession(sessionId: string): Promise<AuthUser | null> {
   const session = await sessionRepo.findSessionById(sessionId);
   if (!session) {
+    logger.debug("Session lookup failed: not found", { sessionId: sessionId.slice(0, 8) + "..." });
     return null;
   }
 
   // Check expiration
   if (session.expiresAt.getTime() <= Date.now()) {
+    logger.warn("Session expired", {
+      sessionId: sessionId.slice(0, 8) + "...",
+      userId: session.userId,
+      expiresAt: session.expiresAt.toISOString(),
+    });
     // Delete expired session in background
     void sessionRepo.deleteSession(sessionId);
     return null;
   }
 
   const { user } = session;
+  logger.debug("Session validated successfully", {
+    userId: user.id,
+    email: user.email,
+  });
+
   return {
     id: user.id,
     userId: user.id,
@@ -47,9 +62,11 @@ export async function validateSession(sessionId: string): Promise<AuthUser | nul
 }
 
 export async function revokeSession(sessionId: string): Promise<boolean> {
+  logger.info("Revoking session", { sessionId: sessionId.slice(0, 8) + "..." });
   return sessionRepo.deleteSession(sessionId);
 }
 
 export async function revokeAllUserSessions(userId: number): Promise<number> {
+  logger.info("Revoking all sessions for user", { userId });
   return sessionRepo.deleteSessionsByUserId(userId);
 }

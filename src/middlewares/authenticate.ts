@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import * as tokenService from "../services/tokenService.js";
 import * as sessionService from "../services/sessionService.js";
+import { logger } from "../utils/logger.js";
 
 /**
  * Flexible / Dual authentication middleware.
@@ -24,9 +25,11 @@ export async function authenticate(
     if (user) {
       req.user = user;
       req.authMethod = "jwt";
+      logger.debug("Authenticate middleware: authorized via JWT", { userId: user.id });
       return next();
     }
 
+    logger.warn("Authenticate middleware: invalid or expired JWT token");
     res.status(401).json({
       error: "Unauthorized",
       details: "Invalid or expired JWT token",
@@ -46,9 +49,11 @@ export async function authenticate(
       req.user = user;
       req.sessionId = sessionId;
       req.authMethod = "session";
+      logger.debug("Authenticate middleware: authorized via session", { userId: user.id });
       return next();
     }
 
+    logger.warn("Authenticate middleware: invalid or expired session", { sessionId: sessionId.slice(0, 8) + "..." });
     res.status(401).json({
       error: "Unauthorized",
       details: "Invalid or expired session",
@@ -57,6 +62,7 @@ export async function authenticate(
   }
 
   // Neither provided
+  logger.warn("Authenticate middleware: missing credentials (no Bearer token or session id/cookie)");
   res.status(401).json({
     error: "Unauthorized",
     details: "Authentication required. Provide a Bearer token or a session cookie",

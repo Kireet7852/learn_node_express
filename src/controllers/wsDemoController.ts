@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
+import { logger } from "../utils/logger.js";
 
 export function getWsDemo(_req: Request, res: Response): void {
+  logger.debug("Serving WebSocket HTML demo playground");
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

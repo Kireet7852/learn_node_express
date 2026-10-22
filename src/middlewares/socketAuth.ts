@@ -1,6 +1,7 @@
 import type { Socket } from "socket.io";
 import * as tokenService from "../services/tokenService.js";
 import * as sessionService from "../services/sessionService.js";
+import { logger } from "../utils/logger.js";
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -82,11 +83,18 @@ export async function socketAuthMiddleware(
     if (jwtToken) {
       const user = await tokenService.verifyToken(jwtToken);
       if (!user) {
+        logger.warn("Socket.IO handshake failed: invalid or expired JWT token", {
+          socketId: socket.id,
+        });
         return next(new Error("Unauthorized: Invalid or expired JWT token"));
       }
 
       socket.data.user = user;
       socket.data.authMethod = "jwt";
+      logger.debug("Socket.IO handshake authenticated via JWT", {
+        socketId: socket.id,
+        userId: user.id,
+      });
       return next();
     }
 
@@ -115,22 +123,37 @@ export async function socketAuthMiddleware(
     if (sessionId) {
       const user = await sessionService.validateSession(sessionId);
       if (!user) {
+        logger.warn("Socket.IO handshake failed: invalid or expired session", {
+          socketId: socket.id,
+          sessionId: sessionId.slice(0, 8) + "...",
+        });
         return next(new Error("Unauthorized: Invalid or expired session"));
       }
 
       socket.data.user = user;
       socket.data.sessionId = sessionId;
       socket.data.authMethod = "session";
+      logger.debug("Socket.IO handshake authenticated via session", {
+        socketId: socket.id,
+        userId: user.id,
+      });
       return next();
     }
 
     // ── 3. Neither provided ────────────────────────────────────────────────────
+    logger.warn("Socket.IO handshake rejected: missing authentication credentials", {
+      socketId: socket.id,
+    });
     return next(
       new Error(
         "Unauthorized: Authentication required. Provide a valid JWT token or session cookie/ID."
       )
     );
   } catch (error) {
+    logger.error("Socket.IO handshake error occurred", {
+      socketId: socket.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return next(
       error instanceof Error
         ? error
