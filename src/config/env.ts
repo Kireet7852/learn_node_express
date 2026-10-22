@@ -18,6 +18,10 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   // Comma-separated list of allowed origins, e.g. "http://localhost:5173,https://myapp.com"
   CORS_ORIGIN: z.string().default("*"),
+  // Log level for Winston: error, warn, info, http, verbose, debug, silly
+  LOG_LEVEL: z
+    .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
+    .optional(),
 });
 
 // ── Validate ──────────────────────────────────────────────────────────────────
@@ -38,6 +42,9 @@ export const config = {
   corsOrigin: parsed.data.CORS_ORIGIN.includes(",")
     ? parsed.data.CORS_ORIGIN.split(",").map((o) => o.trim())
     : parsed.data.CORS_ORIGIN,
+  logLevel:
+    parsed.data.LOG_LEVEL ??
+    (parsed.data.NODE_ENV === "development" ? "debug" : "info"),
 } as const;
 
 export type Config = typeof config;

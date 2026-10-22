@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { logger } from "../utils/logger.js";
 
 /**
  * Catches unhandled errors thrown in route handlers and returns a 500 response.
@@ -6,11 +7,15 @@ import type { Request, Response, NextFunction } from "express";
  */
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): void {
-  console.error(err.stack ?? err.message);
+  logger.error(err.message, {
+    stack: err.stack,
+    method: req.method,
+    url: req.originalUrl || req.url,
+  });
   res.status(500).json({ error: "Internal server error" });
 }

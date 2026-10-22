@@ -2,6 +2,7 @@ import type { Server as HttpServer } from "node:http";
 import { Server } from "socket.io";
 import { config } from "../config/env.js";
 import { socketAuthMiddleware } from "../middlewares/socketAuth.js";
+import { logger } from "../utils/logger.js";
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -47,7 +48,7 @@ export function initSocketServer(httpServer: HttpServer): TypedSocketServer {
     const user = socket.data.user;
     const authMethod = socket.data.authMethod;
 
-    console.log(
+    logger.info(
       `[Socket.IO] Client connected: socketId=${socket.id}, user=${user.email} (id=${user.id}, via=${authMethod})`
     );
 
@@ -136,7 +137,7 @@ export function initSocketServer(httpServer: HttpServer): TypedSocketServer {
     });
 
     socket.on("disconnect", (reason) => {
-      console.log(
+      logger.info(
         `[Socket.IO] Client disconnected: socketId=${socket.id}, reason=${reason}`
       );
     });
